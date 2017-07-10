@@ -1,3 +1,3 @@
-# mgc-output
+mgc-output
 
-# parse output files from mgc
+parse output files from mgc
