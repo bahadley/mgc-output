@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"strconv"
 	"strings"
 )
 
@@ -13,8 +12,7 @@ var (
 )
 
 type Tuple struct {
-	Timestamp int64
-	Delay     float64
+	Data string
 }
 
 func check(e error) {
@@ -33,17 +31,15 @@ func main() {
 	mgcTuples := make([]Tuple, len(mgcLines))
 
 	for i, l := range mgcLines {
-		if len(l) == 0 {
+		if i < 5 || len(l) == 0 {
 			continue
 		}
 
-		vals := strings.Split(l, ",")
-		mgcTuples[i].Timestamp, err = strconv.ParseInt(vals[0], 10, 64)
-		check(err)
-		mgcTuples[i].Delay, err = strconv.ParseFloat(vals[1], 64)
+		vals := strings.Fields(l)
+		mgcTuples[i].Data = vals[4]
 		check(err)
 
-		fmt.Printf("%d,%d\n", mgcTuples[i].Timestamp, mgcTuples[i].Delay)
+		fmt.Println(mgcTuples[i].Data)
 	}
 }
 
