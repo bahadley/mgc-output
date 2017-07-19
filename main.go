@@ -5,6 +5,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
+	"unicode"
+)
+
+const (
+	HeartbeatEvent = "H"
+	Query          = "Q"
+	Verdict        = "V"
 )
 
 var (
@@ -12,7 +20,11 @@ var (
 )
 
 type Tuple struct {
-	Data string
+	Node      string
+	EventType string
+	EventTime string
+	SeqNo     uint16
+	Delay     time.Duration
 }
 
 func check(e error) {
@@ -36,10 +48,20 @@ func main() {
 		}
 
 		vals := strings.Fields(l)
-		mgcTuples[i].Data = vals[4]
-		check(err)
+		mgcTuples[i].Node = strings.Trim(vals[0], "<>:")
 
-		fmt.Println(mgcTuples[i].Data)
+		f := func(c rune) bool {
+			return !unicode.IsLetter(c) && !unicode.IsNumber(c)
+		}
+		items := strings.FieldsFunc(vals[4], f)
+		mgcTuples[i].EventType = items[0]
+		mgcTuples[i].EventTime = items[1]
+
+		if mgcTuples[i].EventType == HeartbeatEvent ||
+			mgcTuples[i].EventType == Query {
+			fmt.Printf("%s,%s,%s\n", mgcTuples[i].Node,
+				mgcTuples[i].EventType, mgcTuples[i].EventTime)
+		}
 	}
 }
 
