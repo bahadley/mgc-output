@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"strings"
-	"time"
 	"unicode"
 )
 
@@ -17,14 +17,16 @@ const (
 
 var (
 	mgcDataPath string
+	node        string
 )
 
 type Tuple struct {
 	Node      string
 	EventType string
 	EventTime string
-	SeqNo     uint16
-	Delay     time.Duration
+	SeqNo     int
+	Delay     string
+	Verdict   string
 }
 
 func check(e error) {
@@ -56,16 +58,41 @@ func main() {
 		items := strings.FieldsFunc(vals[4], f)
 		mgcTuples[i].EventType = items[0]
 		mgcTuples[i].EventTime = items[1]
+		mgcTuples[i].SeqNo, err = strconv.Atoi(items[2])
+		check(err)
+		if mgcTuples[i].EventType == Query {
+			mgcTuples[i].Delay = items[3]
+		} else if mgcTuples[i].EventType == HeartbeatEvent {
+			mgcTuples[i].Delay = items[3]
+		} else if mgcTuples[i].EventType == Verdict {
+			mgcTuples[i].Verdict = items[3]
+		}
+	}
 
-		if mgcTuples[i].EventType == HeartbeatEvent ||
-			mgcTuples[i].EventType == Query {
-			fmt.Printf("%s,%s,%s\n", mgcTuples[i].Node,
-				mgcTuples[i].EventType, mgcTuples[i].EventTime)
+	output(mgcTuples)
+}
+
+func output(mgcTuples []Tuple) {
+	for _, t := range mgcTuples {
+		if t.Node == node {
+			if t.EventType == HeartbeatEvent || t.EventType == Query {
+				fmt.Printf("%s,%s,%s,%d,%s\n",
+					t.Node, t.EventType,
+					t.EventTime, t.SeqNo,
+					t.Delay)
+			} else if t.EventType == Verdict {
+				fmt.Printf("%s,%s,%s,%s\n",
+					t.Node, t.EventType,
+					t.EventTime, t.Verdict)
+			}
 		}
 	}
 }
 
 func init() {
-	flag.StringVar(&mgcDataPath, "input", "",
-		"mgc data file path")
+	flag.StringVar(&mgcDataPath, "file", "",
+		"mgc data file")
+
+	flag.StringVar(&node, "node", "",
+		"node id")
 }
