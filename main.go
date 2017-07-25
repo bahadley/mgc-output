@@ -18,6 +18,7 @@ const (
 var (
 	mgcDataPath string
 	node        string
+	eventType   string
 )
 
 type Tuple struct {
@@ -75,15 +76,12 @@ func main() {
 func output(mgcTuples []Tuple) {
 	for _, t := range mgcTuples {
 		if t.Node == node {
-			if t.EventType == HeartbeatEvent || t.EventType == Query {
-				fmt.Printf("%s,%s,%s,%d,%s\n",
-					t.Node, t.EventType,
-					t.EventTime, t.SeqNo,
-					t.Delay)
+			if eventType == HeartbeatEvent && t.EventType == HeartbeatEvent {
+				fmt.Printf("%s,%s\n", t.EventTime, t.Delay)
+			} else if eventType == Query && t.EventType == Query {
+				fmt.Printf("%s,%s\n", t.EventTime, t.Delay)
 			} else if t.EventType == Verdict {
-				fmt.Printf("%s,%s,%s,%s\n",
-					t.Node, t.EventType,
-					t.EventTime, t.Verdict)
+				fmt.Printf("%s,%s\n", t.EventTime, t.Verdict)
 			}
 		}
 	}
@@ -95,4 +93,7 @@ func init() {
 
 	flag.StringVar(&node, "node", "",
 		"node id")
+
+	flag.StringVar(&eventType, "type", "",
+		"event type [(H)eartbeat, (Q)uery, (V)erdict]")
 }
