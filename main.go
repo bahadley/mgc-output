@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -22,12 +23,13 @@ var (
 	mgcDataPath string
 	node        string
 	eventType   string
+	baseTime    time.Time
 )
 
 type Tuple struct {
 	Node      string
 	EventType string
-	EventTime string
+	EventTime time.Time
 	SeqNo     int
 	Delay     string
 	Verdict   string
@@ -40,11 +42,7 @@ func (slice MgcTuples) Len() int {
 }
 
 func (slice MgcTuples) Less(i, j int) bool {
-	l, erl := strconv.Atoi(slice[i].EventTime)
-	check(erl)
-	r, err := strconv.Atoi(slice[j].EventTime)
-	check(err)
-	return l < r
+	return (slice[i].EventTime).Before(slice[j].EventTime)
 }
 
 func (slice MgcTuples) Swap(i, j int) {
@@ -79,10 +77,21 @@ func main() {
 			return !unicode.IsLetter(c) && !unicode.IsNumber(c)
 		}
 		items := strings.FieldsFunc(vals[4], f)
+
 		mgcTuples[idx].EventType = items[0]
-		mgcTuples[idx].EventTime = items[1]
+
+		if unixNano, err := strconv.ParseInt(items[1], 10, 64); err == nil {
+			mgcTuples[idx].EventTime = time.Unix(0, unixNano)
+		} else {
+			panic(err)
+		}
+		if i == HeaderLines {
+			baseTime = mgcTuples[idx].EventTime
+		}
+
 		mgcTuples[idx].SeqNo, err = strconv.Atoi(items[2])
 		check(err)
+
 		if mgcTuples[idx].EventType == Query {
 			mgcTuples[idx].Delay = items[3]
 		} else if mgcTuples[idx].EventType == HeartbeatEvent {
@@ -101,12 +110,15 @@ func main() {
 func output(mgcTuples []Tuple) {
 	for _, t := range mgcTuples {
 		if t.Node == node {
+			elapsedTime := t.EventTime.Sub(baseTime)
+			elapsedMillis := elapsedTime.Nanoseconds() / 1000000
+
 			if eventType == HeartbeatEvent && t.EventType == HeartbeatEvent {
-				fmt.Printf("%s,%s\n", t.EventTime, t.Delay)
+				fmt.Printf("%d,%s\n", elapsedMillis, t.Delay)
 			} else if eventType == Query && t.EventType == Query {
-				fmt.Printf("%s,%s\n", t.EventTime, t.Delay)
+				fmt.Printf("%d,%s\n", elapsedMillis, t.Delay)
 			} else if eventType == Verdict && t.EventType == Verdict {
-				fmt.Printf("%s,%s\n", t.EventTime, t.Verdict)
+				fmt.Printf("%d,%s\n", elapsedMillis, t.Verdict)
 			}
 		}
 	}
