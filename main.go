@@ -102,10 +102,10 @@ func output(mgcTuples []Tuple) {
 	for _, t := range mgcTuples {
 		if t.Node == node {
 			if eventType == HeartbeatEvent && t.EventType == HeartbeatEvent {
-				fmt.Printf("%s,%d,%s\n", t.EventTime, t.SeqNo, t.Delay)
+				fmt.Printf("%s,%s\n", t.EventTime, t.Delay)
 			} else if eventType == Query && t.EventType == Query {
 				fmt.Printf("%s,%s\n", t.EventTime, t.Delay)
-			} else if t.EventType == Verdict {
+			} else if eventType == Verdict && t.EventType == Verdict {
 				fmt.Printf("%s,%s\n", t.EventTime, t.Verdict)
 			}
 		}
