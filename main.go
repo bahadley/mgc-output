@@ -17,6 +17,8 @@ const (
 	Verdict        = "V"
 
 	HeaderLines = 5
+
+	OutputHeader = "time,delay"
 )
 
 var (
@@ -108,10 +110,17 @@ func main() {
 }
 
 func output(mgcTuples []Tuple) {
+	var outputted bool
+
 	for _, t := range mgcTuples {
 		if t.Node == node {
 			elapsedTime := t.EventTime.Sub(baseTime)
 			elapsedMillis := elapsedTime.Nanoseconds() / 1000000
+
+			if !outputted {
+				fmt.Println(OutputHeader)
+				outputted = true
+			}
 
 			if eventType == HeartbeatEvent && t.EventType == HeartbeatEvent {
 				fmt.Printf("%d,%s\n", elapsedMillis, t.Delay)
